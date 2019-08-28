@@ -37,6 +37,10 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 	@Override
 	protected Class[] getAnnotatedClasses() {
 		return new Class[] {
+				BaseEntity.class,
+				User.class,
+				Customer.class,
+				UserLog.class
 //				Foo.class,
 //				Bar.class
 		};
@@ -63,7 +67,11 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 
 		configuration.setProperty( AvailableSettings.SHOW_SQL, Boolean.TRUE.toString() );
 		configuration.setProperty( AvailableSettings.FORMAT_SQL, Boolean.TRUE.toString() );
-		//configuration.setProperty( AvailableSettings.GENERATE_STATISTICS, "true" );
+		configuration.setProperty( AvailableSettings.USE_NEW_ID_GENERATOR_MAPPINGS, "false" );
+		configuration.setProperty("hibernate.jdbc.batch_size", "20");
+		configuration.setProperty("hibernate.jdbc.batch_versioned_data", "true");
+		configuration.setProperty("hibernate.order_inserts", "true");
+		configuration.setProperty("hibernate.order_updates", "true");
 	}
 
 	// Add your tests, using standard JUnit.
@@ -72,7 +80,21 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 		// BaseCoreFunctionalTestCase automatically creates the SessionFactory and provides the Session.
 		Session s = openSession();
 		Transaction tx = s.beginTransaction();
-		// Do stuff...
+
+		Customer customer = new Customer();
+		customer.setName("Test");
+		customer.setFirstSurname("Hibernate");
+		customer.setEmail("test@test.com");
+		customer.setFacebookId("2132132132121");
+
+		User user = new CreateUserCommand(customer).execute(session);
+
+		final UserRepo userRepo = new UserRepo(session);
+
+		customer = userRepo.findById(user.getId());
+
+		userRepo.logUserCreation(customer);
+
 		tx.commit();
 		s.close();
 	}
